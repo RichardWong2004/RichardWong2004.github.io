@@ -183,9 +183,9 @@ function generateHeart() {
     heartCont.style.visibility = 'visible';
 
     const photos = [
-    './h.png',
-    './nao3.png',
-    './/corazon.png'
+    '/h.png',
+    '/nao3.png',
+    '/corazon.png'
     ];
     
     const totalPhotos = 22;
