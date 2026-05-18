@@ -1,0 +1,406 @@
+/* ESTILOS GLOBALES */
+body {
+    margin: 0;
+    padding: 0;
+    background: #0a0a0a;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    font-family: 'Quicksand', sans-serif;
+}
+
+.decor-bg {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at center, #1f0d16 0%, #000000 100%);
+    z-index: -1;
+}
+
+/* CONTENEDOR PRINCIPAL */
+#book-container {
+    perspective: 2500px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 75vh;
+    opacity: 0;
+    transition: opacity 2s ease-in-out;
+}
+
+/* CLASE PARA MOSTRAR EL LIBRO */
+.show-book {
+    opacity: 1 !important;
+}
+
+.book {
+    /* TAMAÑO DEL LIBRO */
+    width: 400px; 
+    height: 550px;
+    position: relative;
+    transform-style: preserve-3d;
+    
+    /* EL TRUCO DE LA SIMETRÍA:
+    Lo movemos a la derecha (50% de su propio ancho).
+    Así, el lomo queda desplazado y al abrirse, el libro "abierto" 
+       estará centrado en la pantalla. */
+    transform: translateX(50%) rotateX(5deg);
+    
+    transition: transform 0.8s ease-in-out;
+}
+
+/* PÁGINAS */
+.page {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    transform-origin: left;
+    transform-style: preserve-3d;
+    transition: transform 1.6s cubic-bezier(0.645, 0.045, 0.355, 1);
+    cursor: pointer;
+    will-change: transform; /* Le avisa a la GPU que esta pieza se va a mover */
+}
+
+.page .front, .page .back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    /* FORZAR RENDERIZADO INDEPENDIENTE */
+    backface-visibility: hidden; 
+    -webkit-backface-visibility: hidden; /* Para Chrome/Safari */
+    
+    /* ESTO EVITA QUE LAS LETRAS SE VEAN BORROSAS O PARPADEEN */
+    transform: translateZ(1px); 
+    -webkit-font-smoothing: antialiased;
+    
+    padding: 40px;
+    box-sizing: border-box;
+    border-radius: 5px 20px 20px 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.page .front {
+    background: #fdfcf0;
+    border: 1px solid #d4d3c4;
+    box-shadow: inset 3px 0 20px rgba(0,0,0,0.1), 10px 10px 30px rgba(0,0,0,0.5);
+}
+
+.page .back {
+    background: #f5f4e6;
+    transform: rotateY(180deg);
+    box-shadow: inset -10px 0 30px rgba(0,0,0,0.15);
+}
+
+/* ANIMACIÓN */
+.page.flipped {
+    transform: rotateY(-180deg);
+}
+
+/* TIPOGRAFÍA */
+.title {
+    font-family: 'Dancing Script', cursive;
+    color: #ff007f;
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.text-p {
+    font-size: 1.4rem;
+    line-height: 1.5;
+    color: #333;
+    font-weight: 500;
+}
+
+/* BOTONES */
+.controls {
+    margin-top: 40px;
+    display: flex;
+    gap: 20px;
+    z-index: 1000;
+}
+
+#btn-prev, #btn-next {
+    padding: 12px 25px;
+    border-radius: 50px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+#btn-next { background: #ff007f; color: white; }
+#btn-prev { background: #333; color: white; }
+
+/* MEDIA QUERY PARA MÓVILES (Pantallas pequeñas) */
+@media (max-width: 600px) {
+    .book {
+        /* En celulares el desplazamiento debe ser menor para que no se salga de la pantalla */
+        width: 80vw;
+        height: 60vh;
+        transform: translateX(40%) rotateX(5deg); 
+    }
+    
+    .title { font-size: 2.2rem; }
+    .text-p { font-size: 1.1rem; }
+}
+
+/* PANTALLA DE INTRODUCCIÓN */
+#intro-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #0a0a0a; /* Fondo negro mientras carga */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999; /* Por encima de todo */
+    transition: opacity 0.5s ease-out; /* Duración del desvanecido */
+}
+
+#intro-img {
+    max-width: 80%;
+    max-height: 80%;
+    border-radius: 15px;
+
+    /* Animación opcional de entrada para la foto */
+    animation: fadeInIntro 1s ease-in;
+}
+
+@keyframes fadeInIntro {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+/* Clase que aplicaremos con JS para desaparecerla */
+.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+#swipe-hint {
+    position: fixed;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255, 255, 255, 0.7); /* Blanco semitransparente */
+    font-family: 'Quicksand', sans-serif;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    z-index: 500;
+}
+
+/* Animación de parpadeo */
+.pulse {
+    animation: pulseHint 2s infinite;
+}
+
+@keyframes pulseHint {
+    0% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+    100% { opacity: 0.3; }
+}
+
+
+/* Estilo para los contenedores de fotos en las páginas */
+.img-container {
+    width: 80%;
+    height: 180px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 3px solid white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.page-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Esto hace que la foto no se deforme */
+    filter: sepia(0.2); /* Un toque vintage sutil */
+}
+
+.date {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 20px;
+}
+
+.emoji-small {
+    font-size: 1.5rem;
+    margin-top: 10px;
+}
+
+/* Cambia esto en tu CSS si quieres un color más neutro */
+.title-final {
+    color: #ffcc00; /* Un dorado brillante y alegre */
+}
+
+.cover-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+.img-container-front {
+    width: 220px; /* Tamaño ideal para que no tape los textos */
+    height: 220px;
+    margin: 20px 0;
+    border-radius: 50%; /* Foto circular para un toque más tierno */
+    overflow: hidden;
+    border: 4px solid #ff007f; /* Color que combine con tu título */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.img-container-front img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#heart-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 600px;
+    z-index: 1000;
+    opacity: 1; /* Empieza visible cuando se genera */
+    transition: opacity 2s ease; /* Desvanecimiento de 2 segundos */
+}
+
+/* Esta clase es la que el JS activa */
+.visible-heart { 
+    display: block !important; 
+    opacity: 1 !important; 
+}
+
+.heart-photo {
+    position: absolute;
+    width: 85px; 
+    height: 110px; 
+    object-fit: cover;
+    border-radius: 12px;
+    border: 4px solid #fff; 
+    box-shadow: 0 0 15px rgba(255, 20, 147, 0.8), 
+                0 0 30px rgba(255, 20, 147, 0.4); 
+    
+    opacity: 0;
+    will-change: transform, opacity;
+    /* Forzamos que la imagen use la tarjeta de video */
+    backface-visibility: hidden; 
+    transform: scale(0.5) translateY(20px);
+    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), 
+                opacity 0.8s ease;
+    
+    margin-left: -42px;
+    margin-top: -55px;
+}
+
+.photo-appear {
+    opacity: 1 !important;
+    transform: scale(1) translateY(0) !important;
+}
+
+.heart-photo:hover {
+    transform: scale(1.2);
+    z-index: 100;
+}
+
+.hidden { display: none; }
+.visible { display: block !important; opacity: 1 !important; }
+
+
+/* Contenedor del confeti: una capa invisible en toda la pantalla */
+#confetti-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1500; /* Por debajo del mensaje final (que suele ser 2000 o 9999) */
+    pointer-events: none; /* Crucial: para que puedas tocar lo que hay debajo */
+    overflow: hidden;
+}
+
+/* Estilo del mensaje final para que resalte sobre el confeti */
+#final-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 85%;
+    max-width: 500px;
+    text-align: center;
+    z-index: 9999; /* Siempre por encima de todo */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 2s ease-in-out;
+    /* Mejora la lectura sobre el confeti */
+    background: rgba(255, 255, 255, 0.1); 
+    backdrop-filter: blur(5px); 
+    padding: 20px;
+    border-radius: 15px;
+    color: #fff;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Clase que activa el JS al final */
+.show-final {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+#dedicatoria {
+    font-family: 'Dancing Script', cursive;
+    font-size: 2rem;
+    color: white;
+    text-shadow: 0 0 10px rgba(255, 20, 147, 0.5); /* Un brillo rosa sutil */
+}
+
+
+/* ======================================================== */
+/* ESTILOS EXCLUSIVOS PARA LA FOTO DE NAOMI EN LA PÁGINA 3  */
+/* ======================================================== */
+
+#contenedor-nao-cumple {
+    width: 230px;           /* Tamaño ideal para que encaje bien en la página */
+    height: 230px;          /* Mismo ancho para garantizar un círculo perfecto */
+    margin: 25px auto;      /* Centra la imagen y le da aire arriba y abajo */
+    position: relative;
+    overflow: hidden;       /* Corta la imagen en forma de círculo */
+    border-radius: 50%;     /* Hace el contenedor completamente redondo */
+    
+    /* Borde blanco grueso y sombras de tu estilo original */
+    border: 4px solid #fff; 
+    box-shadow: 0 0 15px rgba(255, 20, 147, 0.6), 
+                0 0 25px rgba(255, 20, 147, 0.3);
+    
+    /* Aceleración por hardware para que no cause lag al mover el libro */
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+#foto-nao-cumple {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;      /* Se adapta al círculo sin deformarse ni estirarse */
+    display: block;
+}
